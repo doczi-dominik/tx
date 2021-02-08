@@ -18,7 +18,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
-          ref: release
           path: go/src/github.com/doczi-dominik/tx
       - name: Package Setup
         run: go get -t -v .
