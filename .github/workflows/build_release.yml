@@ -1,0 +1,46 @@
+name: Build Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GOPATH: /home/runner/work/tx/tx/go
+    steps:
+      - name: Go Setup
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: release
+          path: go/src/github.com/doczi-dominik/tx
+      - name: Package Setup
+        run: go get -t -v .
+        working-directory: go/src/github.com/doczi-dominik/tx
+      - name: Test
+        run: go test -v .
+        working-directory: go/src/github.com/doczi-dominik/tx
+      - name: Build
+        if: success()
+        run: go build -v .
+        working-directory: go/src/github.com/doczi-dominik/tx
+      - name: Get Current Date and Time
+        id: datetime
+        run: echo "::set-output name=datetime::$(date '+%Y%m%d%H%M')"
+      - name: Make Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: latest
+          prerelease: false
+          title: "Build v${{ steps.datetime.outputs.datetime }}"
+          files: |
+            go/src/github.com/doczi-dominik/tx/tx
+            go/src/github.com/doczi-dominik/tx/README.md
+            go/src/github.com/doczi-dominik/tx/LICENSE
