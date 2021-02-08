@@ -51,7 +51,7 @@ alias td='tx --list="tasks" --delete-if-empty done'
 
 *Note: The usage section uses the aliases defined in [Setup](#setup)/2. Some of the actions are only applicable to tasks mode or done mode. Check the help page with `--help/-h` to learn more.*
 
-## # Modes
+## Modes
 
 `tx` uses subcommands, just like Git! These are:
 - `tx tasks`: List and modify active tasks
@@ -265,7 +265,7 @@ Code | Meaning
 22 | No tasklist exists with this Sync ID
 23 | Could not request new Sync ID from the Sync server
 24 | Unparseable response from Sync server
-25 | Unsupported Configuration, mainly exists to signify that deleting this blob is disabled on JSON Blob, which `tx` will never configure.
+25 | Unsupported Configuration, mainly exists to signify that deleting this blob is disabled on the Sync service, which `tx` will never configure.
 
 # Contributions
 
