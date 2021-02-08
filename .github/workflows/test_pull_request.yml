@@ -1,0 +1,28 @@
+name: "Test Pull Request"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GOPATH: /home/runner/work/tx/tx/go
+    steps:
+      - name: Go Setup
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: release
+          path: go/src/github.com/doczi-dominik/tx
+      - name: Package Setup
+        run: go get -t -v .
+        working-directory: go/src/github.com/doczi-dominik/tx
+      - name: Test
+        run: go test -v .
+        working-directory: go/src/github.com/doczi-dominik/tx
