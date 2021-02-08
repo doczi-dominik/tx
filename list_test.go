@@ -34,6 +34,7 @@ func TestSaveLocal(t *testing.T) {
 	ConfigOptions.DeleteIfEmpty = true
 
 	now := time.Now()
+	unixBirth := time.Unix(0, 0)
 
 	// Simulate a tasklist with data in it
 	tl := &Tasklist{
@@ -63,7 +64,7 @@ func TestSaveLocal(t *testing.T) {
 		Error(ErrTaskfileRead, TaskfilePath, err)
 	}
 
-	checkContents := fmt.Sprintf("a | id:idc, creation:%s, finished:1970/01/01/01/00", now.Format(FullDateFormat))
+	checkContents := fmt.Sprintf("a | id:idc, creation:%s, finished:%s", now.Format(FullDateFormat), unixBirth.Format(FullDateFormat))
 
 	AssertEqual(t, string(contents), checkContents, "Taskfile's contents do not match the manually constructed one")
 
