@@ -1,4 +1,4 @@
-tasks.txt
-.tasks.txt.bak
-.tasks.txt.sync
-.tasks.txt.done
+tasks
+.tasks.bak
+.tasks.sync
+.tasks.done
