@@ -30,7 +30,6 @@ func (a *EnableParams) Execute(args []string) error {
 	InitPathVariables(ConfigOptions.List)
 
 	var syncURL string
-	var newSyncID string
 
 	if a.URL != "" {
 		syncURL = strings.TrimSpace(a.URL)
@@ -40,40 +39,7 @@ func (a *EnableParams) Execute(args []string) error {
 
 	EnsureTrailingSlash(&syncURL)
 
-	if a.Args.SyncID != "" {
-		newSyncID = a.Args.SyncID
-	} else {
-		resp, err := http.Post(syncURL, "application/json", nil)
-
-		if err != nil {
-			Error(ErrRequestSyncID, syncURL, err)
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 201 {
-			Error(ErrInvalidResponse, syncURL, "status is "+resp.Status)
-		}
-
-		// Extract the new syncID from the updated location header.
-		location, err := resp.Location()
-
-		if err != nil {
-			Error(ErrInvalidResponse, err)
-		}
-
-		locationString := location.String()
-		newSyncID = locationString[strings.LastIndex(locationString, "/")+1:]
-	}
-
-	newSyncID = strings.TrimSpace(newSyncID)
-
-	ReplaceOrAppendSyncfileLine(SyncIDPattern, "syncID: "+newSyncID+"\n")
-	ReplaceOrAppendSyncfileLine(SyncURLPattern, "syncURL: "+syncURL+"\n")
-
-	upload()
-
-	fmt.Println(newSyncID + " from " + syncURL)
+	enable(syncURL, a.Args.SyncID)
 
 	return nil
 }
@@ -202,7 +168,8 @@ func (a *NowParams) Execute(args []string) error {
 // SwitchParams holds the command line arguments for the `sync switch` subcommand.
 type SwitchParams struct {
 	Args struct {
-		URL string `description:"The URL of the Sync service. If unspecified, the fallback Sync URL will be used."`
+		URL    string `description:"The URL of the Sync service. If unspecified, the fallback Sync URL will be used."`
+		SyncID string `description:"The new Sync ID of the tasklist. If unspecified, a new Sync ID will be requested."`
 	} `positional-args:"true"`
 }
 
@@ -221,9 +188,7 @@ func (a *SwitchParams) Execute(args []string) error {
 
 	EnsureTrailingSlash(&syncURL)
 
-	ReplaceOrAppendSyncfileLine(SyncURLPattern, "syncURL: "+syncURL)
-
-	upload()
+	enable(syncURL, a.Args.SyncID)
 
 	return nil
 }
@@ -233,6 +198,45 @@ func (a *SwitchParams) Execute(args []string) error {
 func init() {
 	var actions SyncActions
 	GlobalParser.AddCommand("sync", "Manage Syncing for the current tasklist", "", &actions)
+}
+
+func enable(syncURL string, syncID string) {
+	var newSyncID string
+
+	if syncID != "" {
+		newSyncID = syncID
+	} else {
+		resp, err := http.Post(syncURL, "application/json", nil)
+
+		if err != nil {
+			Error(ErrRequestSyncID, syncURL, err)
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 201 {
+			Error(ErrInvalidResponse, syncURL, "status is "+resp.Status)
+		}
+
+		// Extract the new syncID from the updated location header.
+		location, err := resp.Location()
+
+		if err != nil {
+			Error(ErrInvalidResponse, err)
+		}
+
+		locationString := location.String()
+		newSyncID = locationString[strings.LastIndex(locationString, "/")+1:]
+	}
+
+	newSyncID = strings.TrimSpace(newSyncID)
+
+	ReplaceOrAppendSyncfileLine(SyncIDPattern, "syncID: "+newSyncID+"\n")
+	ReplaceOrAppendSyncfileLine(SyncURLPattern, "syncURL: "+syncURL+"\n")
+
+	upload()
+
+	fmt.Printf("\"%s\" from \"%s\"", newSyncID, syncURL)
 }
 
 func upload() {

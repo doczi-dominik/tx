@@ -137,7 +137,8 @@ func TestSyncing(t *testing.T) {
 
 		params := SwitchParams{
 			Args: struct {
-				URL string "description:\"The URL of the Sync service. If unspecified, the fallback Sync URL will be used.\""
+				URL    string "description:\"The URL of the Sync service. If unspecified, the fallback Sync URL will be used.\""
+				SyncID string "description:\"The new Sync ID of the tasklist. If unspecified, a new Sync ID will be requested.\""
 			}{},
 		}
 
