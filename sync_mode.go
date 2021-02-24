@@ -253,5 +253,8 @@ func upload() {
 	MainList.LoadLocal()
 	DoneList.LoadLocal()
 
+	MainList.MarkModified()
+	DoneList.MarkModified()
+
 	lm.Save()
 }
