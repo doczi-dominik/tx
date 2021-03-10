@@ -8,8 +8,8 @@ import (
 
 // GetMetafilePath derives the path of a metafile from the regular tasklist's
 // path.
-func GetMetafilePath(ext string) string {
-	dir, filename := path.Split(TaskfilePath)
+func GetMetafilePath(ext string, source string) string {
+	dir, filename := path.Split(source)
 
 	return dir + "." + filename + ext
 }

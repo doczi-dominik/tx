@@ -19,9 +19,6 @@ var (
 	// SyncfilePath holds the path to the current Syncfile. The path is derived
 	// from TaskfilePath like so: "./.{TaskfilePath}.sync".
 	SyncfilePath string
-	// BackupfilePath holds the path to the current backup taskfile. The path
-	// is derived from TaskfilePath like so: "./.{TaskfilePath}.bak".
-	BackupfilePath string
 )
 
 var (
@@ -44,9 +41,8 @@ func InitPathVariables(taskfilePath string) {
 	}
 
 	TaskfilePath = taskfilePath
-	DonefilePath = GetMetafilePath(".done")
-	SyncfilePath = GetMetafilePath(".sync")
-	BackupfilePath = GetMetafilePath(".bak")
+	DonefilePath = GetMetafilePath(".done", TaskfilePath)
+	SyncfilePath = GetMetafilePath(".sync", TaskfilePath)
 }
 
 func main() {

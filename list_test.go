@@ -80,7 +80,7 @@ func TestSaveLocal(t *testing.T) {
 	}
 
 	// Test if backup was created
-	if _, err := os.Stat(BackupfilePath); os.IsNotExist(err) {
+	if _, err := os.Stat(GetMetafilePath(".bak", TaskfilePath)); os.IsNotExist(err) {
 		t.Fatal("Backup file was not created after SaveLocal()")
 	}
 }

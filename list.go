@@ -36,12 +36,13 @@ func (tl *Tasklist) SaveLocal() {
 		if src != nil {
 			defer src.Close()
 
-			dst := CreateBackupfile()
+			backupFilePath := GetMetafilePath(".bak", tl.filePath)
+			dst := CreateTaskfile(backupFilePath)
 
 			_, err := io.Copy(dst, src)
 
 			if err != nil {
-				Error(ErrBackupWrite, BackupfilePath, err)
+				Error(ErrBackupWrite, backupFilePath, err)
 			}
 		}
 	}

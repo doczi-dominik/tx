@@ -50,11 +50,6 @@ func CreateSyncfile() (syncfile *os.File) {
 	return createFile(SyncfilePath, ErrSyncfileOpen)
 }
 
-// CreateBackupfile opens a backup taskfile for writing and handles errors.
-func CreateBackupfile() (backupFile *os.File) {
-	return createFile(BackupfilePath, ErrBackupCreate)
-}
-
 // ReplaceOrAppendSyncfileLine essentialy makes sure that an "entry" appears in a
 // syncfile exactly once.
 func ReplaceOrAppendSyncfileLine(pattern *regexp.Regexp, repl string) {
