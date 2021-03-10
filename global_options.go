@@ -48,7 +48,7 @@ func RunCallback() {
 func init() {
 	// Set defaults manually so they are available before parsing finishes.
 	ConfigOptions.List = "tasks"
-	ConfigOptions.FallbackSyncURL = "https://jsonblob.com/api/jsonBlob/"
+	ConfigOptions.FallbackSyncURL = ""
 	OutputOptions.Format = "{index} - {task}"
 
 	GlobalParser.AddGroup("Configuration Options", "", &ConfigOptions)
