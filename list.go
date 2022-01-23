@@ -54,6 +54,12 @@ func (tl *Tasklist) SaveLocal() {
 			if err != nil {
 				Warn("Could not delete empty taskfile \"%s\": %v\n", tl.filePath, err)
 			}
+		} else {
+			err := os.Truncate(tl.filePath, 0)
+
+			if err != nil {
+				Error(ErrTaskfileWrite, tl.filePath, err)
+			}
 		}
 		return
 	}
