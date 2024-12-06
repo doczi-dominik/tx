@@ -44,7 +44,7 @@ type TasklistManager struct {
 // ParseSyncfile reads the appropriate syncfile and sets the manager's fields
 // to their values.
 func (tm *TasklistManager) ParseSyncfile() {
-	syncfile := OpenSyncfile(true)
+	syncfile := GlobalFS.openSyncfile(true)
 
 	if syncfile == nil {
 		return
@@ -80,7 +80,7 @@ func (tm *TasklistManager) ParseSyncfile() {
 			lastNetworkUpdate, err := time.Parse(LastNetworkUpdateFormat, lastNetworkUpdateMatch[1])
 
 			if err != nil {
-				Warn("Invalid lastNetworkUpdate date in syncfile \"%s\": %s", SyncfilePath, lastNetworkUpdateMatch[1])
+				Warn("Invalid lastNetworkUpdate date in syncfile \"%s\": %s", GlobalFS.getSyncfilePath(), lastNetworkUpdateMatch[1])
 			}
 
 			tm.lastNetworkUpdate = lastNetworkUpdate
@@ -89,17 +89,17 @@ func (tm *TasklistManager) ParseSyncfile() {
 	}
 
 	if err := scanner.Err(); err != nil {
-		Error(ErrSyncfileRead, SyncfilePath, err)
+		Error(ErrSyncfileRead, GlobalFS.getSyncfilePath(), err)
 	}
 }
 
 // Init sets all the filepaths and initializes both active and finished
 // tasklists.
 func (tm *TasklistManager) Init() {
-	InitPathVariables(ConfigOptions.List)
+	GlobalFS.init()
 
-	MainList.filePath = TaskfilePath
-	DoneList.filePath = DonefilePath
+	MainList.filePath = GlobalFS.getTaskfilePath()
+	DoneList.filePath = GlobalFS.getDonefilePath()
 
 	MainList.tasks = make(map[int]Task)
 	DoneList.tasks = make(map[int]Task)

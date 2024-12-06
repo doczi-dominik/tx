@@ -10,7 +10,7 @@ import (
 
 func TestLoadLocal(t *testing.T) {
 	// Prepare data to be loaded
-	InitTestingPathVariables(t)
+	InitTestingFS(t)
 
 	taskfile := CreateTaskfile(TaskfilePath)
 	taskfile.WriteString("a\nb\nc\n")
@@ -29,7 +29,7 @@ func TestLoadLocal(t *testing.T) {
 }
 
 func TestSaveLocal(t *testing.T) {
-	InitTestingPathVariables(t)
+	InitTestingFS(t)
 
 	ConfigOptions.DeleteIfEmpty = true
 

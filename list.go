@@ -17,7 +17,7 @@ type Tasklist struct {
 
 // LoadLocal reads the provided taskfile and parses tasks into the tasklist.
 func (tl *Tasklist) LoadLocal() {
-	taskfile := OpenTaskfile(tl.filePath, true)
+	taskfile := GlobalFS.openTaskfile(true)
 
 	if taskfile != nil {
 		defer taskfile.Close()
@@ -31,13 +31,15 @@ func (tl *Tasklist) LoadLocal() {
 // SaveLocal serializes and writes tasks to the provided tasklist.
 func (tl *Tasklist) SaveLocal() {
 	if !ConfigOptions.Reckless {
-		src := OpenTaskfile(tl.filePath, true)
+		src := GlobalFS.openTaskfile(true)
 
 		if src != nil {
 			defer src.Close()
 
 			backupFilePath := GetMetafilePath(".bak", tl.filePath)
-			dst := CreateTaskfile(backupFilePath)
+			dst := GlobalFS.createFile(backupFilePath, ErrBackupCreate)
+
+			defer dst.Close()
 
 			_, err := io.Copy(dst, src)
 
@@ -64,7 +66,7 @@ func (tl *Tasklist) SaveLocal() {
 		return
 	}
 
-	taskfile := CreateTaskfile(tl.filePath)
+	taskfile := GlobalFS.createTaskfile()
 	defer taskfile.Close()
 
 	_, err := taskfile.Write(tl.serialized)

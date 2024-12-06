@@ -27,7 +27,7 @@ type EnableParams struct {
 
 // Execute uses the provided EnableParams and enables syncing for the tasklist.
 func (a *EnableParams) Execute(args []string) error {
-	InitPathVariables(ConfigOptions.List)
+	GlobalFS.init()
 
 	var syncURL string
 
@@ -50,7 +50,7 @@ type DisableParams struct{}
 // Execute uses the provided DisableParams and disables syncing for the
 // tasklist.
 func (a *DisableParams) Execute(args []string) error {
-	InitPathVariables(ConfigOptions.List)
+	GlobalFS.init()
 
 	ReplaceOrAppendSyncfileLine(SyncIDPattern, "")
 	ReplaceOrAppendSyncfileLine(SyncURLPattern, "")
@@ -68,7 +68,7 @@ type FreeParams struct {
 // Execute uses the provided FreeParams and "frees" storage on the sync service
 // by deleting the uploaded tasklist and disabling syncing for the local one.
 func (a *FreeParams) Execute(args []string) error {
-	InitPathVariables(ConfigOptions.List)
+	GlobalFS.init()
 
 	// Read Sync ID and Sync URL from syncfile
 	var (
@@ -81,7 +81,7 @@ func (a *FreeParams) Execute(args []string) error {
 		syncID = a.Args.SyncID
 	}
 
-	syncfile := OpenSyncfile(false)
+	syncfile := GlobalFS.openSyncfile(false)
 	defer syncfile.Close()
 
 	scanner := bufio.NewScanner(syncfile)
@@ -105,7 +105,7 @@ func (a *FreeParams) Execute(args []string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		Error(ErrSyncfileRead, SyncfilePath, err)
+		Error(ErrSyncfileRead, GlobalFS.getSyncfilePath(), err)
 	}
 
 	if syncURL == "" {
@@ -139,13 +139,13 @@ func (a *FreeParams) Execute(args []string) error {
 		Error(ErrUnsupportedConfig, url)
 	case 200:
 		// Remove the syncID line from the syncfile
-		syncfile = CreateSyncfile()
+		syncfile = GlobalFS.createSyncfile()
 		defer syncfile.Close()
 
 		_, err = syncfile.WriteString(syncfileContents + "\n")
 
 		if err != nil {
-			Error(ErrSyncfileWrite, SyncfilePath, err)
+			Error(ErrSyncfileWrite, GlobalFS.getSyncfilePath(), err)
 		}
 	default:
 		Error(ErrInvalidResponse, url, "status is "+resp.Status)
@@ -176,7 +176,7 @@ type SwitchParams struct {
 // Execute uses the provided SwitchParams and switches Sync services for the
 // current tasklist.
 func (a *SwitchParams) Execute(args []string) error {
-	InitPathVariables(ConfigOptions.List)
+	GlobalFS.init()
 
 	var syncURL string
 

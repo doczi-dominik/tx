@@ -50,9 +50,9 @@ func InitEmptyTestingEnv(tl **Tasklist) {
 	}
 }
 
-// InitTestingPathVariables initializes all filepaths to a temporary directory
+// InitTestingFS initializes all filepaths to a temporary directory
 // managed by the testing library.
-func InitTestingPathVariables(t *testing.T) {
+func InitTestingFS(t *testing.T) {
 	// Circumventing the no re-initialization rule for testing.
 	SyncfilePath = ""
 	InitPathVariables(t.TempDir() + "/tasks")
