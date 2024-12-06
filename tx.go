@@ -8,7 +8,7 @@ import (
 
 // GlobalParser is the argument parser which holds all options and arguments.
 var GlobalParser *flags.Parser = flags.NewNamedParser("tx", flags.HelpFlag|flags.PassDoubleDash)
-var GlobalFS FS
+var GlobalFS *FS
 
 var (
 	// MainList is the tasklist which holds all active tasks. Managed by
@@ -23,7 +23,7 @@ var (
 )
 
 func main() {
-	GlobalFS = createFileFS()
+	GlobalFS = createOsFS()
 
 	_, err := GlobalParser.Parse()
 

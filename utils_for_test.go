@@ -8,19 +8,27 @@ import (
 	"time"
 )
 
+func TestMain(m *testing.M) {
+	GlobalFS = createMemFS()
+
+	os.Exit(m.Run())
+}
+
 // InitTestingEnv initializes a tasklist with a set of 7 default "hello world"
 // tasks.
 func InitTestingEnv(tl **Tasklist) {
+	const HelloWorld = "hello world"
+
 	*tl = &Tasklist{
 		loaded: true,
 		tasks: map[int]Task{
-			1: {text: "hello world"},
-			2: {text: "hello world"},
-			3: {text: "hello world"},
-			4: {text: "hello world"},
-			5: {text: "hello world"},
-			6: {text: "hello world"},
-			7: {text: "hello world"},
+			1: {text: HelloWorld},
+			2: {text: HelloWorld},
+			3: {text: HelloWorld},
+			4: {text: HelloWorld},
+			5: {text: HelloWorld},
+			6: {text: HelloWorld},
+			7: {text: HelloWorld},
 		},
 	}
 }
@@ -48,14 +56,6 @@ func InitEmptyTestingEnv(tl **Tasklist) {
 		loaded: true,
 		tasks:  map[int]Task{},
 	}
-}
-
-// InitTestingFS initializes all filepaths to a temporary directory
-// managed by the testing library.
-func InitTestingFS(t *testing.T) {
-	// Circumventing the no re-initialization rule for testing.
-	SyncfilePath = ""
-	InitPathVariables(t.TempDir() + "/tasks")
 }
 
 // AssertEqual fails the current test if two values are not equal.

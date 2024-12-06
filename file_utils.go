@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"os"
 	"regexp"
+
+	"github.com/spf13/afero"
 )
 
-func openFile(filePath string, errorCode int, optional bool) *os.File {
-	file, err := os.Open(filePath)
+func openFile(fs afero.Fs, filePath string, errorCode int, optional bool) afero.File {
+	file, err := fs.Open(filePath)
 
 	if err != nil {
 		if optional && os.IsNotExist(err) {
@@ -20,8 +22,8 @@ func openFile(filePath string, errorCode int, optional bool) *os.File {
 	return file
 }
 
-func createFile(filePath string, errorCode int) *os.File {
-	file, err := os.Create(filePath)
+func createFile(fs afero.Fs, filePath string, errorCode int) afero.File {
+	file, err := fs.Create(filePath)
 
 	if err != nil {
 		Error(errorCode, filePath, err)

@@ -10,15 +10,13 @@ import (
 
 func TestLoadLocal(t *testing.T) {
 	// Prepare data to be loaded
-	InitTestingFS(t)
-
-	taskfile := CreateTaskfile(TaskfilePath)
+	taskfile := GlobalFS.createTaskfile()
 	taskfile.WriteString("a\nb\nc\n")
 	taskfile.Close()
 
 	// Simulate a tasklist
 	tl := &Tasklist{
-		filePath: TaskfilePath,
+		filePath: GlobalFS.getTaskfilePath(),
 		tasks:    make(map[int]Task),
 	}
 
@@ -29,58 +27,73 @@ func TestLoadLocal(t *testing.T) {
 }
 
 func TestSaveLocal(t *testing.T) {
-	InitTestingFS(t)
+	doTest := func() {
+		now := time.Now()
+		unixBirth := time.Unix(0, 0)
 
-	ConfigOptions.DeleteIfEmpty = true
+		tfPath := GlobalFS.getTaskfilePath()
 
-	now := time.Now()
-	unixBirth := time.Unix(0, 0)
+		// Simulate a tasklist with data in it
+		tl := &Tasklist{
+			filePath: tfPath,
+			tasks: map[int]Task{
+				1: {text: "a", hash: "idc", creationDate: now, finishedDate: time.Unix(0, 0)},
+			},
+		}
 
-	// Simulate a tasklist with data in it
-	tl := &Tasklist{
-		filePath: TaskfilePath,
-		tasks: map[int]Task{
-			1: {text: "a", hash: "idc", creationDate: now, finishedDate: time.Unix(0, 0)},
-		},
+		// Check serialization
+		tl.SerializeTasks()
+
+		AssertNotEqual(t, len(tl.serialized), 0, "Simulated tasklist's serialized field is empty")
+
+		// Save then check file contents
+		tl.SaveLocal()
+
+		var contents []byte
+
+		scanner := bufio.NewScanner(GlobalFS.openTaskfile(false))
+
+		for scanner.Scan() {
+			contents = append(contents, scanner.Bytes()...)
+		}
+
+		if err := scanner.Err(); err != nil {
+			Error(ErrTaskfileRead, tfPath, err)
+		}
+
+		checkContents := fmt.Sprintf("a | id:idc, creation:%s, finished:%s", now.Format(FullDateFormat), unixBirth.Format(FullDateFormat))
+
+		AssertEqual(t, string(contents), checkContents, "Taskfile's contents do not match the manually constructed one")
+
+		// Test --delete-if-empty
+		tl.tasks = make(map[int]Task)
+		tl.SerializeTasks()
+
+		// Save and test if the file still exists
+		tl.SaveLocal()
+
+		// Test if backup was created
+		if _, err := GlobalFS.Stat(GetMetafilePath(".bak", tfPath)); os.IsNotExist(err) {
+			t.Fatal("Backup file was not created after SaveLocal()")
+		}
 	}
 
-	// Check serialization
-	tl.SerializeTasks()
+	t.Run("deleteIfEmpty-true", func(t *testing.T) {
+		ConfigOptions.DeleteIfEmpty = true
 
-	AssertNotEqual(t, len(tl.serialized), 0, "Simulated tasklist's serialized field is empty")
+		doTest()
 
-	// Save then check file contents
-	tl.SaveLocal()
+		tfPath := GlobalFS.getTaskfilePath()
+		_, err := GlobalFS.Stat(tfPath)
 
-	var contents []byte
+		if err == nil {
+			t.Fatal("Empty taskfile was not deleted")
+		}
+	})
 
-	scanner := bufio.NewScanner(OpenTaskfile(TaskfilePath, false))
+	t.Run("deleteIfEmpty-false", func(t *testing.T) {
+		ConfigOptions.DeleteIfEmpty = false
 
-	for scanner.Scan() {
-		contents = append(contents, scanner.Bytes()...)
-	}
-
-	if err := scanner.Err(); err != nil {
-		Error(ErrTaskfileRead, TaskfilePath, err)
-	}
-
-	checkContents := fmt.Sprintf("a | id:idc, creation:%s, finished:%s", now.Format(FullDateFormat), unixBirth.Format(FullDateFormat))
-
-	AssertEqual(t, string(contents), checkContents, "Taskfile's contents do not match the manually constructed one")
-
-	// Test --delete-if-empty
-	tl.tasks = make(map[int]Task)
-	tl.SerializeTasks()
-
-	// Save and test if the file still exists
-	tl.SaveLocal()
-
-	if _, err := os.Stat(TaskfilePath); err == nil {
-		t.Fatal("Empty taskfile was not deleted")
-	}
-
-	// Test if backup was created
-	if _, err := os.Stat(GetMetafilePath(".bak", TaskfilePath)); os.IsNotExist(err) {
-		t.Fatal("Backup file was not created after SaveLocal()")
-	}
+		doTest()
+	})
 }

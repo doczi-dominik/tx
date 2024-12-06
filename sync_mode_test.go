@@ -47,8 +47,6 @@ func newSyncIDHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func TestSyncing(t *testing.T) {
-	InitTestingFS(t)
-
 	// Set up a dummy Sync service.
 	mux := http.NewServeMux()
 

@@ -2,6 +2,12 @@ module github.com/doczi-dominik/tx
 
 go 1.23.4
 
-require github.com/jessevdk/go-flags v1.6.1
+require (
+	github.com/jessevdk/go-flags v1.6.1
+	github.com/spf13/afero v1.11.0
+)
 
-require golang.org/x/sys v0.21.0 // indirect
+require (
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
+)

@@ -15,6 +15,25 @@ type Tasklist struct {
 	loaded     bool         // True if the task has finished loading.
 }
 
+func (tl *Tasklist) copyToBackup() {
+	src := GlobalFS.openTaskfile(true)
+
+	if src != nil {
+		defer src.Close()
+
+		backupFilePath := GetMetafilePath(".bak", tl.filePath)
+		dst := GlobalFS.createFile(backupFilePath, ErrBackupCreate)
+
+		defer dst.Close()
+
+		_, err := io.Copy(dst, src)
+
+		if err != nil {
+			Error(ErrBackupWrite, backupFilePath, err)
+		}
+	}
+}
+
 // LoadLocal reads the provided taskfile and parses tasks into the tasklist.
 func (tl *Tasklist) LoadLocal() {
 	taskfile := GlobalFS.openTaskfile(true)
@@ -31,33 +50,18 @@ func (tl *Tasklist) LoadLocal() {
 // SaveLocal serializes and writes tasks to the provided tasklist.
 func (tl *Tasklist) SaveLocal() {
 	if !ConfigOptions.Reckless {
-		src := GlobalFS.openTaskfile(true)
-
-		if src != nil {
-			defer src.Close()
-
-			backupFilePath := GetMetafilePath(".bak", tl.filePath)
-			dst := GlobalFS.createFile(backupFilePath, ErrBackupCreate)
-
-			defer dst.Close()
-
-			_, err := io.Copy(dst, src)
-
-			if err != nil {
-				Error(ErrBackupWrite, backupFilePath, err)
-			}
-		}
+		tl.copyToBackup()
 	}
 
 	if tl.IsEmpty() {
 		if ConfigOptions.DeleteIfEmpty {
-			err := os.Remove(tl.filePath)
+			err := GlobalFS.Remove(tl.filePath)
 
 			if err != nil {
 				Warn("Could not delete empty taskfile \"%s\": %v\n", tl.filePath, err)
 			}
 		} else {
-			err := os.Truncate(tl.filePath, 0)
+			err := GlobalFS.Truncate(tl.filePath)
 
 			if err != nil {
 				Error(ErrTaskfileWrite, tl.filePath, err)
@@ -79,7 +83,7 @@ func (tl *Tasklist) SaveLocal() {
 // MTimeAfter determines if the last modification time for a taskfile is after
 // another time object.
 func (tl *Tasklist) MTimeAfter(compare time.Time) bool {
-	stat, err := os.Stat(tl.filePath)
+	stat, err := GlobalFS.Stat(tl.filePath)
 
 	if err != nil {
 		if !os.IsNotExist(err) {

@@ -105,6 +105,78 @@ func (tm *TasklistManager) Init() {
 	DoneList.tasks = make(map[int]Task)
 }
 
+func (tm *TasklistManager) loadNetwork() LoadSource {
+	// Prepare URL
+	tm.syncURL = strings.TrimSpace(tm.syncURL)
+	EnsureTrailingSlash(&tm.syncURL)
+
+	tm.syncID = strings.TrimSpace(tm.syncID)
+
+	url := tm.syncURL + tm.syncID
+
+	// Complete GET Request
+	request, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		Error(ErrGETReqCreate, url, err)
+	}
+
+	request.Header = JSONHeaders
+
+	resp, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		Warn("Could not complete GET request: %v", err)
+		return Local
+	}
+
+	defer resp.Body.Close()
+
+	statusCode := resp.StatusCode
+
+	switch statusCode {
+	case 404:
+		Warn("Could not find tasklist with Sync ID \"%s\"", tm.syncID)
+		return Local
+	case 200:
+		// Unmarshal JSON stirng into map[string]string
+		var jsonData []byte
+
+		for s := bufio.NewScanner(resp.Body); s.Scan(); {
+			jsonData = append(jsonData, s.Bytes()...)
+		}
+
+		var data map[string]interface{}
+
+		if json.Unmarshal(jsonData, &data) != nil {
+			Warn("Failed to parse network response: %v", err)
+			return Local
+		}
+
+		// Parse active and finished tasklists
+		{
+			reader := strings.NewReader(data["contents"].(string))
+
+			MainList.ParseTasklines("[syncID:"+tm.syncID+"]", reader)
+		}
+
+		{
+			reader := strings.NewReader(data["doneContents"].(string))
+
+			DoneList.ParseTasklines("[syncID:"+tm.syncID+"]", reader)
+		}
+
+		MainList.loaded = true
+		DoneList.loaded = true
+
+		return Network
+
+	default:
+		Warn("Invalid response when loading tasklist: status is " + resp.Status)
+		return Local
+	}
+}
+
 // Load loads from network if possible and determines the loading source.
 func (tm *TasklistManager) Load() {
 	tm.source = func() LoadSource {
@@ -128,76 +200,7 @@ func (tm *TasklistManager) Load() {
 			return OutdatedNetwork
 		}
 
-		// Prepare URL
-		tm.syncURL = strings.TrimSpace(tm.syncURL)
-		EnsureTrailingSlash(&tm.syncURL)
-
-		tm.syncID = strings.TrimSpace(tm.syncID)
-
-		url := tm.syncURL + tm.syncID
-
-		// Complete GET Request
-		request, err := http.NewRequest("GET", url, nil)
-
-		if err != nil {
-			Error(ErrGETReqCreate, url, err)
-		}
-
-		request.Header = JSONHeaders
-
-		resp, err := http.DefaultClient.Do(request)
-
-		if err != nil {
-			Warn("Could not complete GET request: %v", err)
-			return Local
-		}
-
-		defer resp.Body.Close()
-
-		statusCode := resp.StatusCode
-
-		switch statusCode {
-		case 404:
-			Warn("Could not find tasklist with Sync ID \"%s\"", tm.syncID)
-			return Local
-		case 200:
-			// Unmarshal JSON stirng into map[string]string
-			var jsonData []byte
-
-			for s := bufio.NewScanner(resp.Body); s.Scan(); {
-				jsonData = append(jsonData, s.Bytes()...)
-			}
-
-			var data map[string]interface{}
-
-			if json.Unmarshal(jsonData, &data) != nil {
-				Warn("Failed to parse network response: %v", err)
-				return Local
-			}
-
-			// Parse active and finished tasklists
-			{
-				reader := strings.NewReader(data["contents"].(string))
-
-				MainList.ParseTasklines("[syncID:"+tm.syncID+"]", reader)
-			}
-
-			{
-				reader := strings.NewReader(data["doneContents"].(string))
-
-				DoneList.ParseTasklines("[syncID:"+tm.syncID+"]", reader)
-
-			}
-
-			MainList.loaded = true
-			DoneList.loaded = true
-
-			return Network
-		default:
-			Warn("Invalid response when loading tasklist: status is " + resp.Status)
-			return Local
-		}
-
+		return tm.loadNetwork()
 	}()
 }
 

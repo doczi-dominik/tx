@@ -65,18 +65,7 @@ type FreeParams struct {
 	} `positional-args:"true"`
 }
 
-// Execute uses the provided FreeParams and "frees" storage on the sync service
-// by deleting the uploaded tasklist and disabling syncing for the local one.
-func (a *FreeParams) Execute(args []string) error {
-	GlobalFS.init()
-
-	// Read Sync ID and Sync URL from syncfile
-	var (
-		syncID           string
-		syncURL          string
-		syncfileContents string
-	)
-
+func (a *FreeParams) getSyncData() (syncID string, syncURL string, syncfileContents string) {
 	if a.Args.SyncID != "" {
 		syncID = a.Args.SyncID
 	}
@@ -107,6 +96,17 @@ func (a *FreeParams) Execute(args []string) error {
 	if err := scanner.Err(); err != nil {
 		Error(ErrSyncfileRead, GlobalFS.getSyncfilePath(), err)
 	}
+
+	return
+}
+
+// Execute uses the provided FreeParams and "frees" storage on the sync service
+// by deleting the uploaded tasklist and disabling syncing for the local one.
+func (a *FreeParams) Execute(args []string) error {
+	GlobalFS.init()
+
+	// Read Sync ID and Sync URL from syncfile
+	syncID, syncURL, syncfileContents := a.getSyncData()
 
 	if syncURL == "" {
 		syncURL = strings.TrimSpace(ConfigOptions.FallbackSyncURL)
@@ -139,7 +139,7 @@ func (a *FreeParams) Execute(args []string) error {
 		Error(ErrUnsupportedConfig, url)
 	case 200:
 		// Remove the syncID line from the syncfile
-		syncfile = GlobalFS.createSyncfile()
+		syncfile := GlobalFS.createSyncfile()
 		defer syncfile.Close()
 
 		_, err = syncfile.WriteString(syncfileContents + "\n")
